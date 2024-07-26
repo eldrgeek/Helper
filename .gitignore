@@ -1,0 +1,14 @@
+node_modules/
+__pycache__/
+*.pyc
+.env
+venv/
+env/
+.venv/
+.env/
+virtual/
+build/
+dist/
+*.log
+secrets.json
+package-lock.json

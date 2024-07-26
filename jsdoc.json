@@ -1,0 +1,12 @@
+{
+  "source": {
+    "include": ["server/src", "client/src"],
+    "includePattern": ".+\.ts(x)?$",
+    "excludePattern": "(^|\/|\\)_"
+  },
+  "plugins": ["plugins/markdown"],
+  "opts": {
+    "destination": "./docs/js/",
+    "recurse": true
+  }
+}
