@@ -1,46 +1,33 @@
 #!/bin/bash
 
-# ... (previous parts of the script remain unchanged)
+# Exit on error
+set -e
 
-# Set up client
-cd ./client
-npx create-react-app . --template typescript
-npm install socket.io-client
+echo "Setting up the project..."
 
-# Create a .env file in the client directory to increase memory limit
-echo "GENERATE_SOURCEMAP=false" > .env
-echo "TSC_COMPILE_ON_ERROR=true" >> .env
-echo "DISABLE_NEW_JSX_TRANSFORM=true" >> .env
+# Install root dependencies
+echo "Installing root dependencies..."
+npm install
 
-# Create a custom React app rescripts configuration
-cat << EOF > .rescriptsrc.js
-module.exports = [
-  config => {
-    config.optimization.splitChunks = {
-      cacheGroups: {
-        default: false,
-      },
-    };
-    config.optimization.runtimeChunk = false;
-    return config;
-  },
-  ['use-babel-config', '.babelrc'],
-];
-EOF
+# Install client dependencies
+echo "Installing client dependencies..."
+cd client
+npm install
+cd ..
 
-# Create a .babelrc file
-cat << EOF > .babelrc
-{
-  "presets": [
-    "react-app"
-  ]
-}
-EOF
+# Install server dependencies
+echo "Installing server dependencies..."
+cd server
+npm install
+cd ..
 
-# Update package.json to use rescripts
-sed -i 's/"react-scripts /"react-app-rewired /g' package.json
+# Set up Python virtual environment
+echo "Setting up Python virtual environment..."
+python3 -m venv venv
+source venv/bin/activate
 
-# Install necessary dependencies
-npm install --save-dev @rescripts/cli react-app-rewired
+# Run Python configuration script
+echo "Running Python configuration script..."
+python @conf.py
 
-# ... (rest of the script remains unchanged)
+echo "Setup complete!"
