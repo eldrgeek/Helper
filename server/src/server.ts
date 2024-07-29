@@ -38,6 +38,9 @@ interface StateStructure {
     tabs: TabInfo[];
     llmTabs: TabInfo[];
   };
+  logger: {
+    socket: Socket | null;
+  };
 }
 
 interface SessionInfo {
@@ -62,6 +65,7 @@ const state: StateStructure = {
     tabs: [],
     llmTabs: [],
   },
+  logger: { socket: null },
 };
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
@@ -108,6 +112,13 @@ app.get('/', (req, res) => {
 
 io.on('connection', (socket: Socket) => {
   console.log('A user connected');
+  
+
+  // Check if the connected socket is the logger
+  socket.on('requestLogger', () => {
+    state.logger.socket = socket;
+    console.log('Logger connected');
+  });
 
   // Handle session requests
   socket.on('requestSession', (componentType: string) => {
@@ -162,6 +173,7 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
+
   // Handle LLM tab updates
   socket.on('updateLLMTab', (tabInfo: any) => {
     const existingTabIndex = state.extension.llmTabs.findIndex(tab => tab.id === tabInfo.id);
@@ -180,6 +192,14 @@ io.on('connection', (socket: Socket) => {
     } catch (error) {
       console.error('Error handling command:', error);
       socket.emit('commandResponse', { error: 'An error occurred while processing the command' });
+    }
+  });
+
+  // Handle event messages
+  socket.on('event', (data) => {
+    // console.log('SERVER RECEIVED event',data)
+    if (state.logger.socket) {
+      state.logger.socket.emit('message', data);
     }
   });
 });
