@@ -124,6 +124,11 @@ def read_tasks():
         return [line.strip() for line in f.readlines()]
 
 def write_ui_action(action):
+    # global topwindow  # Access the topwindow variable
+    # mouse_x, mouse_y = mou.position  # Get current mouse position
+    # if topwindow.winfo_x() <= mouse_x <= topwindow.winfo_x() + topwindow.winfo_width() and \
+    #    topwindow.winfo_y() <= mouse_y <= topwindow.winfo_y() + topwindow.winfo_height():
+    #     return  # Do not write to file if mouse is in the bounding box of topwindow
     with open('uiactions.txt', 'a') as f:  # Overwrite the file each time
         f.write(action + '\n')
 
@@ -164,6 +169,7 @@ root.withdraw()  # Hide the main window
 tasks = read_tasks()
 task_index = 0
 
+
 listener = keyboard.Listener (
    on_press=on_press, 
    on_release=on_release)
@@ -176,7 +182,7 @@ mlistener = mouse.Listener (
 mlistener.start()
 
 print("started")
-
+   
 # Start the heartbeat thread
 heartbeat_thread = threading.Thread(target=send_heartbeat)
 heartbeat_thread.daemon = True  # Allows the thread to exit when the main program does
