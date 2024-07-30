@@ -1,12 +1,14 @@
 from pynput import mouse
 from pynput import keyboard
+from pynput.mouse import Button
 import time
 import threading
 import tkinter as tk  # Import tkinter for message boxes
 import tkinter.messagebox as messagebox  # Import messagebox explicitly
 import os
 from pynput.keyboard import Key  # Import Key for special keys
-
+from tkinter import *
+    
 # Glyph mapping for modifiers and special keys
 glyph_map = {
     Key.cmd: '⌘',
@@ -129,12 +131,35 @@ def print_ui_actions():
     with open('uiactions.txt', 'r') as f:
         print(f.read())  # Print the contents of the file
 
-def show_task_and_log(task):
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window
-    root.attributes('-topmost', True)  # Make the window stay on top
-    messagebox.showinfo("Task", task)  # Show message box
-    write_ui_action(f'##task {task}')  # Log the task
+def show_top_window():
+    global task_index  # Add task_index to the global scope
+    topwindow = Toplevel()
+    topwindow.title('Enter Room Inventory')
+    topwindow.geometry("200x200+500+100")
+    topwindow.attributes('-topmost', True)
+
+    # Display the current task in the top window
+    task_label = tk.Label(topwindow, text=tasks[task_index])  # Show current task
+    task_label.pack(pady=10)
+
+    # Button to go to the next task
+    next_button = tk.Button(topwindow, text="Next Task", command=lambda: next_task(task_label))
+    next_button.pack(pady=10)
+
+    topwindow.mainloop()
+
+def next_task(task_label):
+    global task_index
+    task_index += 1
+    if task_index < len(tasks):
+        task_label.config(text=tasks[task_index])  # Update the label with the next task
+    else:
+        task_label.config(text="No more tasks")  # Handle case when no more tasks are available
+        root.quit()  # Exit the program when all tasks are completed
+
+# Hide the main Tkinter window
+root = tk.Tk()
+root.withdraw()  # Hide the main window
 
 tasks = read_tasks()
 task_index = 0
@@ -160,16 +185,18 @@ heartbeat_thread.start()
 with open('uiactions.txt', 'w') as f:  # Overwrite the file each time
         f.write("####start\n")
 # Iterate through tasks
-for task in tasks:
-    show_task_and_log(task)
-    task_index += 1
-    if task_index >= len(tasks):
-        break
+# for task in tasks:
+#     show_task_and_log(task)
+#     task_index += 1
+#     if task_index >= len(tasks):
+#         break
 
-# Close all files and exit
+
+show_top_window()# Close all files and exit
 print_ui_actions()  # Print the contents of uiactions.txt before exiting
 print("All tasks completed. Exiting.")
 
 # # Keep the program alive
+
 # listener.join()
 # mlistener.join()

@@ -1,12 +1,1 @@
 ####start
-click left 614.93359375, 872.99609375
-type "this is a test⏎"
-type "⏎"
-press ⌫
-press ↑
-press ←
-press →
-click left 573.203125, 886.97265625
-click left 125.64453125, 97.01953125
-click left 164.6796875, 259.18359375
-click left 162.015625, 345.56640625
