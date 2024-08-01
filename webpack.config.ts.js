@@ -56,6 +56,9 @@ const config = {
   },
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx']
+  },
+  devServer: {
+    hot: true, // Enable HMR
   }
 };
 

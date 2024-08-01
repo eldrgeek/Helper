@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './UI';
+import UI from './UI';
 
 const render = (Component: React.ComponentType) => {
   ReactDOM.render(
@@ -11,12 +11,10 @@ const render = (Component: React.ComponentType) => {
   );
 };
 
-render(App);
+render(UI);
 
-if (module.hot) {
-  module.hot.accept('./App', () => {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const NextApp = require('./App').default;
-    render(NextApp);
-  });
+if (import.meta.hot) {
+  import.meta.hot.accept();
+  const NextApp = require('./UI').default;
+  render(NextApp);
 }

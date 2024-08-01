@@ -12,3 +12,5 @@ dist/
 *.log
 secrets.json
 package-lock.json
+merged_monitor.py
+diff.txt

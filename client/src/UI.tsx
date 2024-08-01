@@ -5,6 +5,16 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { io, Socket } from 'socket.io-client';
 import { FaCircle } from 'react-icons/fa';
 import styled from 'styled-components';
+import Rewind from "./Comonents/Rewind"
+
+declare global {
+  interface ImportMeta {
+    hot?: {
+      accept: () => void;
+      on: (event: string, callback: () => void) => void;
+    };
+  }
+}
 
 const Container = styled.div`
   max-width: 1200px;
@@ -124,8 +134,19 @@ const UI: React.FC = () => {
     }
   }, [handleSubmit]);
 
+  // if (import.meta.hot) {
+  //   import.meta.hot.accept();
+  //   import.meta.hot.on("*", () => {
+  //     // Tricgger a re-render when the code changes
+  //     console.log("Updated")
+  //     setOutput((prev) => prev); // This will force a re-render
+  //   });
+  // }
+
   return (
     <Container>
+      Editiadfadafd
+      <Rewind/>
       <StatusBar>
         <StatusItem>
           Server: <FaCircle color={serverStatus ? 'green' : 'red'} />
@@ -136,6 +157,7 @@ const UI: React.FC = () => {
         <StatusItem>
           Controller: <FaCircle color={componentStatus.controller ? 'green' : 'red'} />
         </StatusItem>
+
         <StatusItem>
           Extension: <FaCircle color={componentStatus.extension ? 'green' : 'red'} />
         </StatusItem>

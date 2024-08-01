@@ -1,14 +1,26 @@
-from pynput import mouse
-from pynput import keyboard
-from pynput.mouse import Button
-import time
 import threading
-import tkinter as tk  # Import tkinter for message boxes
-import tkinter.messagebox as messagebox  # Import messagebox explicitly
-import os
-from pynput.keyboard import Key  # Import Key for special keys
-from tkinter import *
-    
+import time
+from pynput import keyboard, mouse
+import tkinter as tk
+from tkinter import messagebox
+from pynput.keyboard import Key
+from pynput.mouse import Controller  # Add this import at the top
+
+# Global variables
+key_buffer = []
+tasks = []
+task_index = 0
+shift_pressed = False
+modifiers = []
+mouse_start = None
+mouse_button = None
+start_time = None
+task_display = None
+
+# File paths
+TASKS_FILE = "tasks.txt"  
+ACTIONS_FILE = "uiactions.txt"
+
 # Glyph mapping for modifiers and special keys
 glyph_map = {
     Key.cmd: '⌘',
@@ -24,185 +36,182 @@ glyph_map = {
     Key.right: '→',
     Key.up: '↑',
     Key.down: '↓',
-    # Add more mappings as needed
 }
 
-# Modify on_press and on_release to log key events
-key_buffer = []
-shift_pressed = False  # Flag to track if Shift is pressed
-modifiers = []  # Track active modifiers
-mouse_start = None  # Track mouse click start position
-mouse_button = None  # Track which mouse button is pressed
+def log_action(action):
+    global task_display  # Ensure task_display is accessible
+    try:
+        # Get current mouse position
+        mouse_controller = Controller()
+        mouse_x, mouse_y = mouse_controller.position
 
-charsdown = []  # Define charsdown list to track pressed characters
+        # Check if the mouse is within the messagebox region
+        if task_display.messagebox and task_display.messagebox.winfo_exists():
+            msg_x = task_display.messagebox.winfo_x()
+            msg_y = task_display.messagebox.winfo_y()
+            msg_width = task_display.messagebox.winfo_width()
+            msg_height = task_display.messagebox.winfo_height()
+            if msg_x <= mouse_x <= msg_x + msg_width and msg_y <= mouse_y <= msg_y + msg_height:
+                return  # Do not log if within messagebox region
+
+        with open(ACTIONS_FILE, "a", encoding="utf-8") as f:
+            f.write(action + "\n")
+    except Exception as e:
+        print(f"Error in log_action: {e}")
+
+def emit_keys():
+    global key_buffer
+    if key_buffer:
+        log_action(f'type "{("".join(key_buffer))}"')
+        key_buffer = []
 
 def on_press(key):
-    global key_buffer, shift_pressed, modifiers, mouse_start, mouse_button
-    # Check for modifier keys
-    if key == Key.shift:
-        shift_pressed = True
-    if key in (Key.shift, Key.ctrl, Key.alt, Key.cmd):  # Add other modifiers as needed
-        if key not in modifiers:
-            modifiers.append(key)
-        return  # Do not log modifier press
-
-    # Handle space and other keys
-    if key == Key.space:
-        key_buffer.append(' ')  # Add space to key_buffer
-        print('space key pressed')
-        return
-    elif key == Key.enter:
-        key_buffer.append(glyph_map.get(key))
-        emit_typing()
-        return
-    elif key in (Key.tab, Key.backspace):  # Handle Key.tab and Key.backspace
-        print("key is ", key)
-        emit_typing()
-        write_ui_action(f'press {glyph_map.get(key)}')  # Log key press
-        return
-   
-    if hasattr(key, 'char'):
-        char = key.char.upper() if shift_pressed else key.char
-        key_buffer.append(char)
-        # print('alphanumeric key {0} pressed'.format(char))
-    else:
-        emit_typing()
-        print('special key {0} pressed'.format(key))
-        write_ui_action(f'press {glyph_map.get(key)}')
-
-def emit_typing():
-     global key_buffer
-     if key_buffer:
-        write_ui_action(f'type "{"".join(key_buffer)}"')
-        key_buffer.clear()  # Clear buffer after logging
-    
+    global key_buffer, shift_pressed, modifiers
+    try:
+        if key in (Key.shift, Key.ctrl, Key.alt, Key.cmd):
+            if key not in modifiers:
+                modifiers.append(key)
+            if key == Key.shift:
+                shift_pressed = True
+        elif key == Key.space:
+            key_buffer.append(' ')
+            return
+        elif key == Key.enter:
+            print("Enter pressed")
+            key_buffer.append(glyph_map.get(Key.enter))
+            emit_keys()
+        elif key in glyph_map:
+            emit_keys()
+            log_action(f"press {glyph_map.get(key)}")
+        elif hasattr(key, 'char'):
+            char = key.char.upper() if shift_pressed else key.char
+            key_buffer.append(char)
+        else:
+            emit_keys()
+            log_action(f"press {key}")
+    except Exception as e:
+        log_action(f"KEYBOARD: Error on key press: {e}")
 
 def on_release(key):
-    global key_buffer, shift_pressed, modifiers, mouse_start, mouse_button
-    if key in (Key.shift, Key.ctrl, Key.alt, Key.cmd):  # Add other modifiers as needed
-        if key in modifiers:
-            modifiers.remove(key)
-        if key == Key.shift:
-            shift_pressed = False
-        
-        return  # Do
-    if hasattr(key, 'char'):  # Guard against missing char attribute
-        char = key.char
-        if char in charsdown:
-            charsdown.remove(char)  # Remove from charsdown
-        if shift_pressed:
-            char = char.upper()
-        if key_buffer and char == key_buffer[-1]:  # If the same key is released
-            return  # Do nothing
-    
- 
+    global key_buffer, pressed_keys, shift_pressed, modifiers
+    try:
+        if key in (Key.shift, Key.ctrl, Key.alt, Key.cmd):
+            if key in modifiers:
+                modifiers.remove(key)
+            if key == Key.shift:
+                shift_pressed = False
+            return
+    except Exception as e:
+        print(f"KEYBOARD: Error on key release: {e}")
+
 def on_click(x, y, button, pressed):
-    global mouse_start, mouse_button, start_time  # Add start_time to global variables
+    global mouse_start, mouse_button, start_time
     if pressed:
         mouse_start = (x, y)
         mouse_button = button
-        start_time = time.time()  # Define start_time when the mouse is pressed
+        start_time = time.time()
         return
 
     if mouse_start and mouse_button:
-        duration = time.time() - start_time  # Calculate duration
-        if duration < 0.5:  # Check if duration is less than 0.5 seconds
-            action = f'click left {mouse_start[0]}, {mouse_start[1]}'  # New format for quick clicks
+        duration = time.time() - start_time
+        if duration < 0.5:
+            action = f"click {button} {mouse_start[0]}, {mouse_start[1]}"
         else:
-            action = f'with mouse({mouse_button})\n    start {mouse_start}\n    end {(x, y)}\n    time {duration:.1f}'
-        write_ui_action(action)
-        mouse_start = None  # Reset for next click
+            action = f"with mouse({button})\n    start {mouse_start}\n    end {(x, y)}\n    time {duration:.1f}"
+        log_action(action)
+        mouse_start = None
 
-
-def send_heartbeat():
+def heartbeat():
     while True:
         print("I am here")
-        time.sleep(10) 
+        time.sleep(10)
 
-def read_tasks():
-    with open('tasks.txt', 'r') as f:
-        return [line.strip() for line in f.readlines()]
+def load_tasks():
+    global tasks
+    try:
+        with open(TASKS_FILE, "r", encoding="utf-8") as f:
+            tasks = f.read().splitlines()
+    except FileNotFoundError:
+        print(f"Error: {TASKS_FILE} not found")
 
-def write_ui_action(action):
-    # global topwindow  # Access the topwindow variable
-    # mouse_x, mouse_y = mou.position  # Get current mouse position
-    # if topwindow.winfo_x() <= mouse_x <= topwindow.winfo_x() + topwindow.winfo_width() and \
-    #    topwindow.winfo_y() <= mouse_y <= topwindow.winfo_y() + topwindow.winfo_height():
-    #     return  # Do not write to file if mouse is in the bounding box of topwindow
-    with open('uiactions.txt', 'a') as f:  # Overwrite the file each time
-        f.write(action + '\n')
+class TaskDisplay:
+    def __init__(self):
+        self.root = None
+        self.messagebox = None
+        self.task_label = None
 
-def print_ui_actions():
-    with open('uiactions.txt', 'r') as f:
-        print(f.read())  # Print the contents of the file
+    def display_task(self):
+        global task_index, task_display
+        task_display = self
+        if self.messagebox:
+            self.messagebox.lift()
+            self.messagebox.attributes('-topmost', True)
+            return True
+        if task_index < len(tasks):
+            task = tasks[task_index]
+            if not self.root:
+                self.root = tk.Tk()
+                self.root.withdraw()
+            
+            def update_task():
+                global task_index
+                task_index += 1
+                if task_index < len(tasks):
+                    new_task = tasks[task_index]
+                    self.task_label.config(text=new_task)
+                    log_action(f"Task displayed: {new_task}")
+                else:
+                    log_action("All tasks completed")
+                    self.root.quit()
+            
+            self.messagebox = tk.Toplevel(self.root)
+            self.messagebox.protocol("WM_DELETE_WINDOW", self.root.quit)
+            self.messagebox.title("Task")
+            self.messagebox.geometry("300x150")
+            self.messagebox.configure(bg='#f0f0f0')
+            self.messagebox.attributes('-topmost', True)
+            
+            frame = tk.Frame(self.messagebox, bg='#f0f0f0', padx=10, pady=10)
+            frame.pack(expand=True, fill='both')
+            
+            tk.Label(frame, text="Current Task:", font=("Arial", 12, "bold"), bg='#f0f0f0').pack(pady=(0, 5))
+            self.task_label = tk.Label(frame, text=task, font=("Arial", 10), bg='#f0f0f0', wraplength=280)
+            self.task_label.pack(pady=(0, 10))
+            
+            tk.Button(frame, text="Next Task", command=update_task, 
+                      bg='#4CAF50', fg='white', font=("Arial", 10),
+                      activebackground='#45a049', relief=tk.FLAT).pack(pady=5)
+            
+            log_action(f"Task displayed: {task}")
+            return True
+        else:
+            if self.root:
+                self.root.quit()
+            return False
+        
 
-def show_top_window():
-    global task_index  # Add task_index to the global scope
-    topwindow = Toplevel()
-    topwindow.title('Enter Room Inventory')
-    topwindow.geometry("200x200+500+100")
-    topwindow.attributes('-topmost', True)
 
-    # Display the current task in the top window
-    task_label = tk.Label(topwindow, text=tasks[task_index])  # Show current task
-    task_label.pack(pady=10)
+def main():
+    load_tasks()
 
-    # Button to go to the next task
-    next_button = tk.Button(topwindow, text="Next Task", command=lambda: next_task(task_label))
-    next_button.pack(pady=10)
+    keyboard_listener = keyboard.Listener(on_press=on_press, on_release=on_release)
+    mouse_listener = mouse.Listener(on_click=on_click)
 
-    topwindow.mainloop()
+    keyboard_listener.start()
+    mouse_listener.start()
 
-def next_task(task_label):
-    global task_index
-    task_index += 1
-    if task_index < len(tasks):
-        task_label.config(text=tasks[task_index])  # Update the label with the next task
-    else:
-        task_label.config(text="No more tasks")  # Handle case when no more tasks are available
-        root.quit()  # Exit the program when all tasks are completed
+    heartbeat_thread = threading.Thread(target=heartbeat, daemon=True)
+    heartbeat_thread.start()
 
-# Hide the main Tkinter window
-root = tk.Tk()
-root.withdraw()  # Hide the main window
-
-tasks = read_tasks()
-task_index = 0
-
-
-listener = keyboard.Listener (
-   on_press=on_press, 
-   on_release=on_release)
-listener.start()
-
-mlistener = mouse.Listener (
-    on_click=on_click)
-
-
-mlistener.start()
-
-print("started")
-   
-# Start the heartbeat thread
-heartbeat_thread = threading.Thread(target=send_heartbeat)
-heartbeat_thread.daemon = True  # Allows the thread to exit when the main program does
-heartbeat_thread.start()
-
-with open('uiactions.txt', 'w') as f:  # Overwrite the file each time
+    with open(ACTIONS_FILE, 'w', encoding="utf-8") as f:
         f.write("####start\n")
-# Iterate through tasks
-# for task in tasks:
-#     show_task_and_log(task)
-#     task_index += 1
-#     if task_index >= len(tasks):
-#         break
 
+    task_display = TaskDisplay()
+    task_display.display_task()
+    if task_display.root:
+        task_display.root.mainloop()
 
-show_top_window()# Close all files and exit
-print_ui_actions()  # Print the contents of uiactions.txt before exiting
-print("All tasks completed. Exiting.")
+    print("All tasks completed. Exiting.")
+if __name__ == "__main__":
+    main()
 
-# # Keep the program alive
-
-# listener.join()
-# mlistener.join()

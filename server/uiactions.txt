@@ -1,27 +1,4 @@
 ####start
-press ↓
-type "cwhat is the "
-press ⌫
-press ⌫
-press ⌫
-press ⌫
-press ⌫
-press ⌫
-press ⌫
-press ⌫
-press ⌫
-press ⌫
-press ⌫
-press ⌫
-press ⌫
-type "How do I fis"
-press ⌫
-type "x that errror?⏎"
-type "cvPl⏎"
-type "⏎"
-type "Please fixt"
-press ⌫
-type " this error⏎"
-press ⇥
-press ⇥
-press ⇥
+Task displayed: start rewind
+click Button.left 1129.91015625, 536.54296875
+click Button.left 1195.49609375, 490.171875
