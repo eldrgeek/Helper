@@ -145,7 +145,7 @@ const UI: React.FC = () => {
 
   return (
     <Container>
-      Editiadfadafd
+      Rewind
       <Rewind/>
       <StatusBar>
         <StatusItem>

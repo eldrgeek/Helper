@@ -65,7 +65,6 @@ const App = () => {
 
   return (
     <ChakraProvider>
-      STUasdasfasdf
       <Box p={4}>
         <VStack spacing={4} align="stretch">
           <HStack spacing={4}>
@@ -101,7 +100,7 @@ const App = () => {
             />
           </Box>
           <Button colorScheme="blue" onClick={handleButtonClick}>
-            Moment {message}
+            Go
           </Button>
         </VStack>
       </Box>

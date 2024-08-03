@@ -7,11 +7,11 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const config = {
   mode: 'development',
   entry: [
-    'webpack-hot-middleware/client',
+    'webpack-hot-middleware/client?reload=true',
     path.join(__dirname, 'client/src/index.tsx')
   ],
   output: {
-    path: path.join(__dirname, 'client/build'),
+    path: path.join(__dirname, 'dist'),
     filename: 'bundle.js',
     publicPath: '/'
   },
@@ -24,7 +24,7 @@ const config = {
       patterns: [
         { 
           from: path.join(__dirname, 'client/public'),
-          to: path.join(__dirname, 'client/build'),
+          to: path.join(__dirname, 'dist'),
           globOptions: {
             ignore: ['**/index.html'],
           },
@@ -58,7 +58,13 @@ const config = {
     extensions: ['.js', '.jsx', '.ts', '.tsx']
   },
   devServer: {
-    hot: true, // Enable HMR
+    contentBase: path.join(__dirname, 'dist'),
+    compress: true,
+    port: 9000,
+    hot: true,
+    proxy: {
+      '/api': 'http://localhost:5000'
+    }
   }
 };
 
