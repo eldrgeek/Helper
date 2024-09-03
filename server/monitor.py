@@ -38,7 +38,7 @@ glyph_map = {
     Key.down: '↓',
 }
 
-def log_action(action):
+def log_action(action,check=True):
     global task_display  # Ensure task_display is accessible
     try:
         # Get current mouse position
@@ -46,7 +46,7 @@ def log_action(action):
         mouse_x, mouse_y = mouse_controller.position
 
         # Check if the mouse is within the messagebox region
-        if task_display.messagebox and task_display.messagebox.winfo_exists():
+        if check and task_display.messagebox and task_display.messagebox.winfo_exists():
             msg_x = task_display.messagebox.winfo_x()
             msg_y = task_display.messagebox.winfo_y()
             msg_width = task_display.messagebox.winfo_width()
@@ -56,8 +56,9 @@ def log_action(action):
 
         with open(ACTIONS_FILE, "a", encoding="utf-8") as f:
             f.write(action + "\n")
+            print("Wrote action",action)
     except Exception as e:
-        print(f"Error in log_action: {e}")
+        print(f"Error in log_action: {e}",False)
 
 def emit_keys():
     global key_buffer
@@ -65,8 +66,10 @@ def emit_keys():
         log_action(f'type "{("".join(key_buffer))}"')
         key_buffer = []
 
+
 def on_press(key):
     global key_buffer, shift_pressed, modifiers
+
     try:
         if key in (Key.shift, Key.ctrl, Key.alt, Key.cmd):
             if key not in modifiers:
@@ -91,6 +94,7 @@ def on_press(key):
             log_action(f"press {key}")
     except Exception as e:
         log_action(f"KEYBOARD: Error on key press: {e}")
+
 
 def on_release(key):
     global key_buffer, pressed_keys, shift_pressed, modifiers
@@ -156,10 +160,12 @@ class TaskDisplay:
             def update_task():
                 global task_index
                 task_index += 1
+             
                 if task_index < len(tasks):
                     new_task = tasks[task_index]
                     self.task_label.config(text=new_task)
-                    log_action(f"Task displayed: {new_task}")
+                    log_action(f"## {new_task}",False)
+                    print("update task ", task_index)
                 else:
                     log_action("All tasks completed")
                     self.root.quit()
@@ -182,7 +188,7 @@ class TaskDisplay:
                       bg='#4CAF50', fg='white', font=("Arial", 10),
                       activebackground='#45a049', relief=tk.FLAT).pack(pady=5)
             
-            log_action(f"Task displayed: {task}")
+            log_action(f"## {task}")
             return True
         else:
             if self.root:

@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "scripts": {
     "tp": "cd server && source venv/bin/activate && nodemon --exec python test.py --watch test.py",
+
+    "fr": "cd server && source venv/bin/activate && nodemon --exec python fastrewind.py --watch fastrewind.py",
     "start:mm": "cd server && source venv/bin/activate && nodemon --exec python merged_monitor.py --watch merged_monitor.py",
-    "start:slm": "npm-run-all --parallel start:server start:logger start:monitor",
+    "start:sm": "npm-run-all --parallel start:server start:monitor",
     "start:server": "cd server && nodemon --exec ts-node src/server.ts",
     "start:client": "cd client && npm start",
     "start:monitor": "cd server && source venv/bin/activate && nodemon --exec python monitor.py --watch monitor.py",
