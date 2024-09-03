@@ -1,7 +1,12 @@
 start rewind
-move to date july 1, 2024
-move to date july 20 2024
-change scrolling speed to 1
-change scrolling speed to 2
-change scrolling speed to 3
-scroll
+click three dots
+click moment
+click speed change
+click faster
+click slower
+drag right
+drag left
+click timeline
+press delete
+click confirm
+press ESC
